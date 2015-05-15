@@ -12,13 +12,15 @@ RSpec.describe provider_class do
       @provider = provider_class.new(@resource)
       Puppet::Provider.stubs(:command).with(:dism).returns('dism.exe')
       File.stubs(:exists?).with('C:\Windows\sysnative\Dism.exe').returns(true)
-      cmd = ['dism.exe',
-             '/online',
-             '/Enable-Feature',
-             '/All',
-             "/FeatureName:#{params[:name]}"
-      ]
-      if (params.has_key?(:norestart) && params[:norestart] == true) || !params.has_key?(:norestart)
+
+      cmd = %w(dism.exe /online /Enable-Feature)
+      if params[:all] == true
+        cmd << '/All'
+      end
+      cmd << "/FeatureName:#{params[:name]}"
+      cmd << '/Quiet'
+
+      if (params.has_key?(:norestart) && params[:norestart] == true) || !(params.has_key?(:norestart))
         cmd << '/NoRestart'
       end
 
@@ -29,6 +31,7 @@ RSpec.describe provider_class do
 
     }
   end
+
   shared_examples 'valid disable compile' do
     it {
 
@@ -41,9 +44,11 @@ RSpec.describe provider_class do
       cmd = [
           '/online',
           '/Disable-Feature',
-          "/FeatureName:#{params[:name]}"
+          "/FeatureName:#{params[:name]}",
+          '/Quiet'
       ]
-      if params.has_key?(:norestart) && params[:norestart] == true
+
+      if (params.has_key?(:norestart) && params[:norestart] == true) || !(params.has_key?(:norestart))
         cmd << '/NoRestart'
       end
       subject.expects(:dism).with(cmd)

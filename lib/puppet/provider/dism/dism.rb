@@ -34,26 +34,25 @@ Puppet::Type.type(:dism).provide(:dism) do
   end
 
   def create
-
     cmd = [command(:dism), '/online', '/Enable-Feature']
     if resource[:all]
       cmd << '/All'
     end
     cmd << "/FeatureName:#{resource[:name]}"
+    cmd << '/Quiet'
     if resource[:answer]
       cmd << "/Apply-Unattend:#{resource[:answer]}"
     end
-    if resource[:norestart].to_s != 'false'
+    if resource[:norestart] == :true
       cmd << '/NoRestart'
     end
     output = execute(cmd, :failonfail => false)
     raise Puppet::Error, "Unexpected exitcode: #{$?.exitstatus}\nError:#{output}" unless resource[:exitcode].include? $?.exitstatus
-
   end
 
   def destroy
-    cmd = ['/online', '/Disable-Feature', "/FeatureName:#{resource[:name]}"]
-    if resource[:norestart].to_s == 'true'
+    cmd = ['/online', '/Disable-Feature', "/FeatureName:#{resource[:name]}", '/Quiet']
+    if resource[:norestart] == :true
       cmd << '/NoRestart'
     end
     dism cmd
@@ -69,4 +68,5 @@ Puppet::Type.type(:dism).provide(:dism) do
     status = @property_hash[:state] || currentstate
     status == 'Enabled'
   end
+
 end
